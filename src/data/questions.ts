@@ -1,7 +1,9 @@
-export const quizQuestions = {
+import { Question } from '../types/quiz';
+
+export const quizQuestions: { [key: string]: Question[] } = {
   easy: [
     {
-      type: "multiple-choice",
+      type: "multiple-choice" as const,
       question: "Which of the following is a JavaScript framework?",
       options: ["React", "CSS", "HTML", "Python"],
       correctAnswer: "React"

@@ -7,6 +7,8 @@ interface FeedbackProps {
   onContinue: () => void;
 }
 
+// This component handles the feedback after each submission or when time runs out
+
 const Feedback: React.FC<FeedbackProps> = ({ isCorrect, correctAnswer, onContinue }) => {
   return (
     <div className="text-center py-8 animate-fade-in">

@@ -1,13 +1,9 @@
-import React, { useState } from 'react';
-import { Question } from '../types/quiz';
+import React from 'react';
+import { QuestionProps } from '../types/quiz';
 
-interface QuestionProps {
-  question: Question;
-  onAnswer: (answer: string) => void;
-}
+// This component renders different types of questions and handles answer submission
 
-const QuestionComponent: React.FC<QuestionProps> = ({ question, onAnswer }) => {
-  const [answer, setAnswer] = useState('');
+const QuestionComponent: React.FC<QuestionProps> = ({ question, onAnswer, answer, setAnswer }) => {
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();

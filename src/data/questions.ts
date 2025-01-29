@@ -1,5 +1,7 @@
 import { Question } from '../types/quiz';
 
+// This file stores different questions according to difficulty level
+
 export const quizQuestions: { [key: string]: Question[] } = {
   easy: [
     {

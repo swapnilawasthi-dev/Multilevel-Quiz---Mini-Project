@@ -6,6 +6,7 @@ import QuestionComponent from './components/Question';
 import Feedback from './components/Feedback';
 import Timer from './components/Timer';
 
+// Below constants defines core game rules like required correct answers, time limits, and point values per difficulty level
 const REQUIRED_CORRECT_ANSWERS = 2;
 const QUESTION_TIME_LIMIT = 30;
 const QUESTIONS_PER_LEVEL = 3;
@@ -16,25 +17,24 @@ const POINTS = {
 };
 
 function App() {
-  const [state, setState] = useState<QuizState>(() => {
-    const savedState = localStorage.getItem('quizState');
-    return savedState ? JSON.parse(savedState) : {
-      currentLevel: 'easy',
-      currentQuestionIndex: 0,
-      score: 0,
-      answers: {},
-      gameStatus: 'not-started',
-      timeLeft: QUESTION_TIME_LIMIT,
-    };
+  const [state, setState] = useState<QuizState>({
+    currentLevel: 'easy',
+    currentQuestionIndex: 0,
+    score: 0,
+    answers: {},
+    gameStatus: 'not-started',
+    timeLeft: QUESTION_TIME_LIMIT,
   });
 
   const [highScore, setHighScore] = useState(() => {
     return parseInt(localStorage.getItem('highScore') || '0', 10);
   });
 
+  const [answer, setAnswer] = useState('');
   const [showFeedback, setShowFeedback] = useState(false);
   const [lastAnswerCorrect, setLastAnswerCorrect] = useState(false);
-
+ 
+  // shuffleQuestions shuffles the questions from the data
   const shuffleQuestions = useCallback((level: Level) => {
     const questions = [...quizQuestions[level]];
     for (let i = questions.length - 1; i > 0; i--) {
@@ -58,12 +58,7 @@ function App() {
     });
   }, [shuffleQuestions]);
 
-  useEffect(() => {
-    if (state.gameStatus !== 'not-started') {
-      localStorage.setItem('quizState', JSON.stringify(state));
-    }
-  }, [state]);
-
+  // This useEffect takes care of the timer - starts when showFeedback becomes false and gameStatus is in progress
   useEffect(() => {
     let timer: NodeJS.Timeout;
     if (state.gameStatus === 'in-progress' && state.timeLeft > 0 && !showFeedback) {
@@ -74,6 +69,7 @@ function App() {
     return () => clearInterval(timer);
   }, [state.gameStatus, state.timeLeft, showFeedback]);
 
+  // startGame Function is triggered hen user starts quiz or re-attempt the quiz - It resets the questions and gameState
   const startGame = () => {
     setQuestions({
       easy: shuffleQuestions('easy'),
@@ -88,9 +84,9 @@ function App() {
       gameStatus: 'in-progress',
       timeLeft: QUESTION_TIME_LIMIT,
     });
-    localStorage.removeItem('quizState');
   };
 
+  // handleAnswer checks the answer and add points show feedback accordingly
   const handleAnswer = (answer: string) => {
     if (state.gameStatus !== 'in-progress') return;
     
@@ -116,12 +112,15 @@ function App() {
     setShowFeedback(true);
   };
 
+  // handleTimeUp submits the answer which is selected when the time runs out
   const handleTimeUp = useCallback(() => {
     if (state.gameStatus === 'in-progress' && !showFeedback) {
-      handleAnswer('');
+      handleAnswer(answer);
+      setAnswer('');
     }
-  }, [state.gameStatus, showFeedback]);
+  }, [state.gameStatus, showFeedback, answer, handleAnswer]);
 
+  // continueQuiz handles moving to another question or level after feedback
   const continueQuiz = () => {
     setShowFeedback(false);
     const currentLevelQuestions = questions[state.currentLevel];
@@ -168,6 +167,7 @@ function App() {
   return (
     <div className="min-h-screen bg-gray-100 flex items-center justify-center p-4">
       <div className="w-full max-w-2xl">
+        {/* Handles UI to start the quiz - It will be our UI when user first visits the project */}
         {state.gameStatus === 'not-started' && (
           <div className="bg-white rounded-2xl shadow-xl overflow-hidden animate-fade-in">
             <div className="quiz-gradient p-8 text-white text-center">
@@ -214,7 +214,7 @@ function App() {
             </div>
           </div>
         )}
-
+        {/* Handles the UI when user is attempting a question */}
         {state.gameStatus === 'in-progress' && (
           <div className="bg-white rounded-2xl shadow-xl p-4 sm:p-8 animate-fade-in">
             <div className="mb-6 sm:mb-8">
@@ -251,11 +251,13 @@ function App() {
               currentQuestion && <QuestionComponent
                 question={currentQuestion}
                 onAnswer={handleAnswer}
+                answer={answer}
+                setAnswer={setAnswer}
               />
             )}
           </div>
         )}
-
+        {/* Handles the UI when user passes a level */}
         {state.gameStatus === 'level-complete' && (
           <div className="bg-white rounded-2xl shadow-xl p-4 sm:p-8 text-center animate-fade-in">
             <div className="quiz-gradient -mx-4 sm:-mx-8 -mt-4 sm:-mt-8 p-6 sm:p-8 mb-6 sm:mb-8">
@@ -280,14 +282,22 @@ function App() {
             </button>
           </div>
         )}
-
+        {/* Handles the UI when user fails a level or completes all the levels */}
         {state.gameStatus === 'game-over' && (
           <div className="bg-white rounded-2xl shadow-xl p-4 sm:p-8 text-center animate-fade-in">
             <div className="quiz-gradient -mx-4 sm:-mx-8 -mt-4 sm:-mt-8 p-6 sm:p-8 mb-6 sm:mb-8">
               <Trophy className="w-16 h-16 sm:w-24 sm:h-24 mx-auto text-yellow-300 drop-shadow-lg mb-4" />
-              <h2 className="text-2xl sm:text-3xl font-bold text-white mb-2">Game Over!</h2>
+              <h2 className="text-2xl sm:text-3xl font-bold text-white mb-2">
+                {Object.entries(state.answers)
+                    .filter(([key]) => key.startsWith(state.currentLevel))
+                    .filter(([, isCorrect]) => isCorrect).length >= REQUIRED_CORRECT_ANSWERS
+                    ? "Yayyy!"
+                    : `Game Over!`}
+              </h2>
               <p className="text-lg sm:text-xl text-white opacity-90">
-                {state.currentLevel === 'hard' && state.currentQuestionIndex === questions.hard.length
+                {Object.entries(state.answers)
+                  .filter(([key]) => key.startsWith(state.currentLevel))
+                  .filter(([, isCorrect]) => isCorrect).length >= REQUIRED_CORRECT_ANSWERS
                   ? "Congratulations! You've completed all levels!"
                   : `You reached the ${state.currentLevel} level`}
               </p>

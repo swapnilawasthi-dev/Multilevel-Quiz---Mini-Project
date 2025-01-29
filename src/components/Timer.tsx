@@ -1,10 +1,8 @@
 import React from 'react';
 import { Timer as TimerIcon } from 'lucide-react';
+import { TimerProps } from '../types/quiz';
 
-interface TimerProps {
-  timeLeft: number;
-  onTimeUp: () => void;
-}
+// This component renders the timer with different colors according to time left and handles when time run out
 
 const Timer: React.FC<TimerProps> = ({ timeLeft, onTimeUp }) => {
   React.useEffect(() => {

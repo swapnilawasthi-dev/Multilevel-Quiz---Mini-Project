@@ -16,3 +16,15 @@ export interface QuizState {
   gameStatus: 'not-started' | 'in-progress' | 'level-complete' | 'game-over';
   timeLeft: number;
 }
+
+export interface TimerProps {
+  timeLeft: number;
+  onTimeUp: () => void;
+}
+
+export interface QuestionProps {
+  question: Question;
+  onAnswer: (answer: string) => void;
+  answer: string;
+  setAnswer: (answer: string) => void;
+}
